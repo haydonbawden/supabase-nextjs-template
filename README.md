@@ -66,6 +66,22 @@ Optional demo script:
 
 It seeds WA venues and demo staff/profile/availability patterns. Do not use demo seed in production.
 
+
+## Connecting Supabase with repository secrets
+
+If your CI/CD stores Supabase credentials in repository secrets, this repo includes an automated migration workflow:
+
+- Workflow: `.github/workflows/supabase-migrate.yml`
+- Script: `supabase/scripts/apply_migrations.sh`
+
+Required repository secrets:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_DB_PASSWORD`
+
+The workflow can be run manually (`workflow_dispatch`) or automatically on `main` when migration files change.
+
 ## Replit
 
 A root `.replit` is included:
