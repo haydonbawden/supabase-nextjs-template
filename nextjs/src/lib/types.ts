@@ -1,215 +1,195 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export type UserRole = 'staff' | 'venue_user' | 'admin'
+export type VenueMemberRole = 'owner' | 'manager' | 'staffing_manager'
+export type MembershipStatus = 'pending' | 'approved' | 'rejected'
+export type AvailabilityStatus = 'available' | 'tentative' | 'unavailable'
+export type ShiftStatus = 'sent' | 'accepted' | 'declined' | 'cancelled' | 'completed'
+export type HospitalityRole =
+  | 'bartender'
+  | 'waiter'
+  | 'barista'
+  | 'kitchen_hand'
+  | 'chef'
+  | 'dishwasher'
+  | 'duty_manager'
+  | 'host'
+  | 'runner'
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-      todo_list: {
+      profiles: {
         Row: {
+          id: string
+          role: UserRole
+          full_name: string
+          phone: string | null
+          avatar_url: string | null
+          suburb: string | null
+          postcode: string | null
+          state: string
           created_at: string
-          description: string | null
-          done: boolean
-          done_at: string | null
-          id: number
-          owner: string
-          title: string
-          urgent: boolean
+          updated_at: string
         }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          done?: boolean
-          done_at?: string | null
-          id?: number
-          owner: string
-          title: string
-          urgent?: boolean
+        Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; role: UserRole; full_name: string }
+        Update: Partial<Database['public']['Tables']['profiles']['Row']>
+      }
+      staff_profiles: {
+        Row: {
+          user_id: string
+          bio: string | null
+          years_experience: number
+          rsa_certificate: boolean
+          rsa_certificate_verified: boolean
+          rsa_certificate_file_url: string | null
+          food_safety_certificate: boolean
+          approved_for_work: boolean
+          roles: HospitalityRole[]
+          preferred_suburbs: string[]
+          hourly_rate_min: number | null
+          hourly_rate_preferred: number | null
+          average_rating: number
+          ratings_count: number
+          created_at: string
+          updated_at: string
         }
-        Update: {
-          created_at?: string
-          description?: string | null
-          done?: boolean
-          done_at?: string | null
-          id?: number
-          owner?: string
-          title?: string
-          urgent?: boolean
+        Insert: Partial<Database['public']['Tables']['staff_profiles']['Row']> & { user_id: string }
+        Update: Partial<Database['public']['Tables']['staff_profiles']['Row']>
+      }
+      venues: {
+        Row: {
+          id: string
+          name: string
+          abn: string | null
+          venue_type: string
+          address: string | null
+          suburb: string
+          postcode: string | null
+          state: string
+          liquor_licensed: boolean
+          created_by: string | null
+          created_at: string
+          updated_at: string
         }
-        Relationships: []
+        Insert: Partial<Database['public']['Tables']['venues']['Row']> & { name: string; venue_type: string; suburb: string }
+        Update: Partial<Database['public']['Tables']['venues']['Row']>
+      }
+      venue_memberships: {
+        Row: {
+          id: string
+          venue_id: string
+          user_id: string
+          role: VenueMemberRole
+          status: MembershipStatus
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['venue_memberships']['Row']> & { venue_id: string; user_id: string }
+        Update: Partial<Database['public']['Tables']['venue_memberships']['Row']>
+      }
+      availability_slots: {
+        Row: {
+          id: string
+          staff_user_id: string
+          starts_at: string
+          ends_at: string
+          status: AvailabilityStatus
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['availability_slots']['Row']> & { staff_user_id: string; starts_at: string; ends_at: string }
+        Update: Partial<Database['public']['Tables']['availability_slots']['Row']>
+      }
+      shift_requests: {
+        Row: {
+          id: string
+          venue_id: string
+          created_by: string
+          staff_user_id: string
+          starts_at: string
+          ends_at: string
+          role_required: HospitalityRole
+          hourly_rate: number
+          requires_rsa: boolean
+          message: string | null
+          status: ShiftStatus
+          accepted_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['shift_requests']['Row']> & {
+          venue_id: string
+          created_by: string
+          staff_user_id: string
+          starts_at: string
+          ends_at: string
+          role_required: HospitalityRole
+          hourly_rate: number
+        }
+        Update: Partial<Database['public']['Tables']['shift_requests']['Row']>
+      }
+      ratings: {
+        Row: {
+          id: string
+          shift_request_id: string
+          venue_id: string
+          staff_user_id: string
+          rated_by: string
+          rating: number
+          review_text: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ratings']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['ratings']['Row']>
+      }
+      staff_saved_by_venues: {
+        Row: {
+          id: string
+          venue_id: string
+          staff_user_id: string
+          created_by: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['staff_saved_by_venues']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['staff_saved_by_venues']['Row']>
       }
     }
-    Views: {
-      [_ in never]: never
-    }
+    Views: Record<string, never>
     Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
-
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+      search_available_staff: {
+        Args: {
+          requested_start: string
+          requested_end: string
+          required_role?: HospitalityRole | null
+          required_suburb?: string | null
+          require_rsa?: boolean
+          minimum_rating?: number | null
+          maximum_hourly_rate?: number | null
+        }
+        Returns: {
+          user_id: string
+          full_name: string
+          avatar_url: string | null
+          suburb: string | null
+          postcode: string | null
+          bio: string | null
+          years_experience: number
+          rsa_certificate: boolean
+          rsa_certificate_verified: boolean
+          food_safety_certificate: boolean
+          roles: HospitalityRole[]
+          preferred_suburbs: string[]
+          hourly_rate_min: number | null
+          hourly_rate_preferred: number | null
+          average_rating: number
+          ratings_count: number
+        }[]
       }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
     }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {},
-  },
-} as const
